@@ -53,7 +53,7 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
       console.log('Token:', accessToken ? 'Presente' : 'Ausente');
       console.log('Public Key:', publicKey ? 'Presente' : 'Ausente');
       
-      // Criar preferência para modo teste - usando sandbox
+      // Criar preferência para produção
       const preferenceResponse = await axios.post('https://api.mercadopago.com/checkout/preferences', {
         items: [{
           title: 'Resultado do Quiz - Seu Verdadeiro Signo',
@@ -62,8 +62,8 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
           currency_id: 'BRL'
         }],
         payer: {
-          email: 'test_user_12345@testuser.com',
-          name: 'Test User',
+          email: `${userInfo.name.toLowerCase().replace(' ', '.')}@quiz.com`,
+          name: userInfo.name,
           address: {
             street_name: "Rua Teste",
             street_number: 123,
@@ -79,12 +79,13 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
         },
         statement_descriptor: "QUIZ SIGNOS",
         external_reference: `quiz_${Date.now()}`,
-        // URLs de retorno válidas para teste
+        // URLs de retorno para produção
         back_urls: {
-          success: "https://www.mercadopago.com.br",
-          failure: "https://www.mercadopago.com.br",
-          pending: "https://www.mercadopago.com.br"
-        }
+          success: window.location.origin + "/quiz#payment-success",
+          failure: window.location.origin + "/quiz",
+          pending: window.location.origin + "/quiz#payment-pending"
+        },
+        auto_return: "approved"
       }, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -94,10 +95,8 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
 
       console.log('Resposta:', preferenceResponse.data);
 
-      // Redirecionar para o checkout sandbox
-      if (preferenceResponse.data.sandbox_init_point) {
-        window.open(preferenceResponse.data.sandbox_init_point, '_blank');
-      } else if (preferenceResponse.data.init_point) {
+      // Redirecionar para o checkout de produção
+      if (preferenceResponse.data.init_point) {
         window.open(preferenceResponse.data.init_point, '_blank');
       } else {
         alert('Não foi possível gerar o link de pagamento');
