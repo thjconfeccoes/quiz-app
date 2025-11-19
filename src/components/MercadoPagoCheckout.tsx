@@ -53,17 +53,17 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
       console.log('Token:', accessToken ? 'Presente' : 'Ausente');
       console.log('Public Key:', publicKey ? 'Presente' : 'Ausente');
       
-      // Criar preferência com valor maior e configurações completas
+      // Criar preferência para modo teste - usando sandbox
       const preferenceResponse = await axios.post('https://api.mercadopago.com/checkout/preferences', {
         items: [{
           title: 'Resultado do Quiz - Seu Verdadeiro Signo',
           quantity: 1,
-          unit_price: 10.00, // Aumentado para R$ 10,00
+          unit_price: 10.00,
           currency_id: 'BRL'
         }],
         payer: {
-          email: `${userInfo.name.toLowerCase().replace(' ', '.')}@quiz.com`,
-          name: userInfo.name,
+          email: 'test_user_12345@testuser.com',
+          name: 'Test User',
           address: {
             street_name: "Rua Teste",
             street_number: 123,
@@ -78,7 +78,13 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
           }]
         },
         statement_descriptor: "QUIZ SIGNOS",
-        external_reference: `quiz_${Date.now()}`
+        external_reference: `quiz_${Date.now()}`,
+        // URLs de retorno válidas para teste
+        back_urls: {
+          success: "https://www.mercadopago.com.br",
+          failure: "https://www.mercadopago.com.br",
+          pending: "https://www.mercadopago.com.br"
+        }
       }, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -88,8 +94,10 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
 
       console.log('Resposta:', preferenceResponse.data);
 
-      // Redirecionar para o checkout
-      if (preferenceResponse.data.init_point) {
+      // Redirecionar para o checkout sandbox
+      if (preferenceResponse.data.sandbox_init_point) {
+        window.open(preferenceResponse.data.sandbox_init_point, '_blank');
+      } else if (preferenceResponse.data.init_point) {
         window.open(preferenceResponse.data.init_point, '_blank');
       } else {
         alert('Não foi possível gerar o link de pagamento');
@@ -99,7 +107,7 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
       if (error.response) {
         console.error('Status:', error.response.status);
         console.error('Dados:', error.response.data);
-        alert(`Erro ${error.response.status}: Verifique suas credenciais`);
+        alert(`Erro ${error.response.status}: ${error.response.data.message || 'Verifique suas credenciais'}`);
       } else {
         alert('Erro de conexão. Verifique suas credenciais no Mercado Pago.');
       }
