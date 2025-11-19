@@ -50,7 +50,7 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
       const accessToken = import.meta.env.VITE_MERCADO_PAGO_ACCESS_TOKEN;
       console.log('Token:', accessToken ? 'Presente' : 'Ausente');
       
-      // Primeiro criar uma preferência (checkout pro)
+      // Criar preferência sem auto_return para evitar erro
       const preferenceResponse = await axios.post('https://api.mercadopago.com/checkout/preferences', {
         items: [{
           title: 'Resultado do Quiz - Seu Verdadeiro Signo',
@@ -67,13 +67,12 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
           excluded_payment_methods: [],
           default_payment_method_id: 'pix'
         },
+        // Removendo auto_return e usando URLs relativas
         back_urls: {
-          success: `${window.location.origin}/quiz#payment-success`,
-          failure: `${window.location.origin}/quiz`,
-          pending: `${window.location.origin}/quiz#payment-pending`
-        },
-        auto_return: 'approved',
-        external_reference: `quiz_${Date.now()}_${userInfo.name.replace(/\s/g, '_')}`
+          success: `https://seusite.netlify.app/quiz#payment-success`,
+          failure: `https://seusite.netlify.app/quiz`,
+          pending: `https://seusite.netlify.app/quiz#payment-pending`
+        }
       }, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
