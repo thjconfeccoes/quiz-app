@@ -47,6 +47,9 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
   const createPixPayment = async () => {
     setIsProcessing(true);
     try {
+      const accessToken = import.meta.env.VITE_MERCADO_PAGO_ACCESS_TOKEN;
+      console.log('Token:', accessToken ? 'Presente' : 'Ausente');
+      
       const response = await axios.post('https://api.mercadopago.com/v1/payments', {
         transaction_amount: 3.90,
         description: 'Resultado do Quiz - Seu Verdadeiro Signo',
@@ -62,21 +65,32 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
         }
       }, {
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_MERCADO_PAGO_ACCESS_TOKEN}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         }
       });
+
+      console.log('Resposta PIX:', response.data);
 
       if (response.data.status === 'pending') {
         setPixData({
           qr_code: response.data.point_of_interaction.transaction_data.qr_code,
           qr_code_base64: response.data.point_of_interaction.transaction_data.qr_code_base64,
-          ticket_url: response.data.point_of_interaction.transaction_data.ticket_url
+          ticket_url: response.data.point_of_interaction.transaction_data.ticket_url,
+          payment_id: response.data.id
         });
+      } else {
+        alert('Pagamento PIX criado com status inesperado. Tente novamente.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar pagamento PIX:', error);
-      alert('Erro ao gerar PIX. Tente novamente.');
+      if (error.response) {
+        console.error('Status:', error.response.status);
+        console.error('Dados:', error.response.data);
+        alert(`Erro ${error.response.status}: ${error.response.data.message || 'Tente novamente.'}`);
+      } else {
+        alert('Erro ao gerar PIX. Tente novamente.');
+      }
     } finally {
       setIsProcessing(false);
     }
