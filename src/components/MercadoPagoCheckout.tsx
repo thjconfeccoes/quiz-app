@@ -48,30 +48,21 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
     setIsProcessing(true);
     try {
       const accessToken = import.meta.env.VITE_MERCADO_PAGO_ACCESS_TOKEN;
-      console.log('Token:', accessToken ? 'Presente' : 'Ausente');
+      const publicKey = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY;
       
-      // Criar preferência sem auto_return para evitar erro
+      console.log('Token:', accessToken ? 'Presente' : 'Ausente');
+      console.log('Public Key:', publicKey ? 'Presente' : 'Ausente');
+      
+      // Criar preferência mínima para teste
       const preferenceResponse = await axios.post('https://api.mercadopago.com/checkout/preferences', {
         items: [{
-          title: 'Resultado do Quiz - Seu Verdadeiro Signo',
+          title: 'Quiz Signos',
           quantity: 1,
           unit_price: 3.90,
           currency_id: 'BRL'
         }],
         payer: {
-          email: `${userInfo.name.toLowerCase().replace(' ', '.')}@quiz.com`,
-          name: userInfo.name,
-        },
-        payment_methods: {
-          excluded_payment_types: [],
-          excluded_payment_methods: [],
-          default_payment_method_id: 'pix'
-        },
-        // Removendo auto_return e usando URLs relativas
-        back_urls: {
-          success: `https://seusite.netlify.app/quiz#payment-success`,
-          failure: `https://seusite.netlify.app/quiz`,
-          pending: `https://seusite.netlify.app/quiz#payment-pending`
+          email: 'test@example.com'
         }
       }, {
         headers: {
@@ -80,23 +71,22 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
         }
       });
 
-      console.log('Resposta preferência:', preferenceResponse.data);
+      console.log('Resposta:', preferenceResponse.data);
 
-      // Redirecionar para o checkout do Mercado Pago
+      // Redirecionar para o checkout
       if (preferenceResponse.data.init_point) {
-        window.location.href = preferenceResponse.data.init_point;
+        window.open(preferenceResponse.data.init_point, '_blank');
       } else {
-        alert('Erro ao gerar link de pagamento PIX. Tente novamente.');
+        alert('Não foi possível gerar o link de pagamento');
       }
     } catch (error: any) {
-      console.error('Erro ao criar pagamento PIX:', error);
+      console.error('Erro completo:', error);
       if (error.response) {
         console.error('Status:', error.response.status);
         console.error('Dados:', error.response.data);
-        const errorMsg = error.response.data.cause?.[0]?.description || error.response.data.message || 'Tente novamente.';
-        alert(`Erro ${error.response.status}: ${errorMsg}`);
+        alert(`Erro ${error.response.status}: Verifique suas credenciais`);
       } else {
-        alert('Erro ao gerar PIX. Verifique sua conexão e tente novamente.');
+        alert('Erro de conexão. Verifique suas credenciais no Mercado Pago.');
       }
     } finally {
       setIsProcessing(false);
