@@ -50,19 +50,30 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
       const accessToken = import.meta.env.VITE_MERCADO_PAGO_ACCESS_TOKEN;
       console.log('Token:', accessToken ? 'Presente' : 'Ausente');
       
-      const response = await axios.post('https://api.mercadopago.com/v1/payments', {
-        transaction_amount: 3.90,
-        description: 'Resultado do Quiz - Seu Verdadeiro Signo',
-        payment_method_id: 'pix',
+      // Primeiro criar uma preferência (checkout pro)
+      const preferenceResponse = await axios.post('https://api.mercadopago.com/checkout/preferences', {
+        items: [{
+          title: 'Resultado do Quiz - Seu Verdadeiro Signo',
+          quantity: 1,
+          unit_price: 3.90,
+          currency_id: 'BRL'
+        }],
         payer: {
           email: `${userInfo.name.toLowerCase().replace(' ', '.')}@quiz.com`,
-          first_name: userInfo.name.split(' ')[0],
-          last_name: userInfo.name.split(' ')[1] || '',
-          identification: {
-            type: 'CPF',
-            number: '12345678909'
-          }
-        }
+          name: userInfo.name,
+        },
+        payment_methods: {
+          excluded_payment_types: [],
+          excluded_payment_methods: [],
+          default_payment_method_id: 'pix'
+        },
+        back_urls: {
+          success: `${window.location.origin}/quiz#payment-success`,
+          failure: `${window.location.origin}/quiz`,
+          pending: `${window.location.origin}/quiz#payment-pending`
+        },
+        auto_return: 'approved',
+        external_reference: `quiz_${Date.now()}_${userInfo.name.replace(/\s/g, '_')}`
       }, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -70,26 +81,23 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
         }
       });
 
-      console.log('Resposta PIX:', response.data);
+      console.log('Resposta preferência:', preferenceResponse.data);
 
-      if (response.data.status === 'pending') {
-        setPixData({
-          qr_code: response.data.point_of_interaction.transaction_data.qr_code,
-          qr_code_base64: response.data.point_of_interaction.transaction_data.qr_code_base64,
-          ticket_url: response.data.point_of_interaction.transaction_data.ticket_url,
-          payment_id: response.data.id
-        });
+      // Redirecionar para o checkout do Mercado Pago
+      if (preferenceResponse.data.init_point) {
+        window.location.href = preferenceResponse.data.init_point;
       } else {
-        alert('Pagamento PIX criado com status inesperado. Tente novamente.');
+        alert('Erro ao gerar link de pagamento PIX. Tente novamente.');
       }
     } catch (error: any) {
       console.error('Erro ao criar pagamento PIX:', error);
       if (error.response) {
         console.error('Status:', error.response.status);
         console.error('Dados:', error.response.data);
-        alert(`Erro ${error.response.status}: ${error.response.data.message || 'Tente novamente.'}`);
+        const errorMsg = error.response.data.cause?.[0]?.description || error.response.data.message || 'Tente novamente.';
+        alert(`Erro ${error.response.status}: ${errorMsg}`);
       } else {
-        alert('Erro ao gerar PIX. Tente novamente.');
+        alert('Erro ao gerar PIX. Verifique sua conexão e tente novamente.');
       }
     } finally {
       setIsProcessing(false);
