@@ -1,0 +1,19 @@
+[build]
+  publish = "out"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  VITE_MERCADO_PAGO_ACCESS_TOKEN = "APP_USR-4007080785575557-060321-f312216d7bf32f845fea349cf8592348-233050906"
+  VITE_MERCADO_PAGO_PUBLIC_KEY = "APP_USR-196d2283-456f-49c8-8a7a-442cf5a45882"
+
+[context.deploy-preview.environment]
+  VITE_MERCADO_PAGO_ACCESS_TOKEN = "APP_USR-4007080785575557-060321-f312216d7bf32f845fea349cf8592348-233050906"
+  VITE_MERCADO_PAGO_PUBLIC_KEY = "APP_USR-196d2283-456f-49c8-8a7a-442cf5a45882"
