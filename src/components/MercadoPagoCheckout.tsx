@@ -62,8 +62,8 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
           currency_id: 'BRL'
         }],
         payer: {
-          email: `${userInfo.name.toLowerCase().replace(' ', '.')}@quiz.com`,
-          name: userInfo.name,
+          email: userInfo.name ? `${userInfo.name.toLowerCase().replace(' ', '.')}@quiz.com` : 'test@quiz.com',
+          name: userInfo.name || 'Test User',
           address: {
             street_name: "Rua Teste",
             street_number: 123,
