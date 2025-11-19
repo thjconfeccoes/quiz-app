@@ -53,17 +53,32 @@ export function MercadoPagoCheckout({ userInfo, onSuccess }: MercadoPagoCheckout
       console.log('Token:', accessToken ? 'Presente' : 'Ausente');
       console.log('Public Key:', publicKey ? 'Presente' : 'Ausente');
       
-      // Criar preferência mínima para teste
+      // Criar preferência com valor maior e configurações completas
       const preferenceResponse = await axios.post('https://api.mercadopago.com/checkout/preferences', {
         items: [{
-          title: 'Quiz Signos',
+          title: 'Resultado do Quiz - Seu Verdadeiro Signo',
           quantity: 1,
-          unit_price: 3.90,
+          unit_price: 10.00, // Aumentado para R$ 10,00
           currency_id: 'BRL'
         }],
         payer: {
-          email: 'test@example.com'
-        }
+          email: `${userInfo.name.toLowerCase().replace(' ', '.')}@quiz.com`,
+          name: userInfo.name,
+          address: {
+            street_name: "Rua Teste",
+            street_number: 123,
+            zip_code: "12345678"
+          }
+        },
+        payment_methods: {
+          payment_types: [{
+            id: "pix"
+          }, {
+            id: "credit_card"
+          }]
+        },
+        statement_descriptor: "QUIZ SIGNOS",
+        external_reference: `quiz_${Date.now()}`
       }, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
